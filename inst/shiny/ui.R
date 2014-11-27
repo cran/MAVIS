@@ -1,33 +1,31 @@
 
-shinyUI(bootstrapPage(
+shinyUI(navbarPage("MAVIS: Meta Analysis Via Shiny v1.0",
 
 
-  headerPanel("MAVIS: Meta Analysis Via Shiny v0.2"),
+ # headerPanel("MAVIS: Meta Analysis Via Shiny v0.2"),
 
-
-  sidebarPanel(
-
-    radioButtons("type", strong("Analysis and data input type:"),
-                 list("Mean Differences (n, M, SD)" = "mdms",
-                      "Mean Differences (n, Effect size d)" = "mdes",
-                      "Correlations (n, r)" = "cor"
-                 ),
-    ),
-    helpText("Press Quit to exit the application"),
-    actionButton("quit", "Quit"),
-    br()
-
-  ),
-  mainPanel(
-
-
-
-    tabsetPanel(
 
       tabPanel("Main",
+               sidebarPanel(
+                 
+                 radioButtons("type", strong("Analysis and data input type:"),
+                              list("Mean Differences (n, M, SD)" = "mdms",
+                                   "Mean Differences (n, Effect size d)" = "mdes",
+                                   "Correlations (n, r)" = "cor"
+                              ),
+                 ),
+                 helpText("Click here to update your results, you need to do this after you change the data, model, or setting"),
+                 submitButton("Update View"),
+                 br(),
+                 helpText("Press Quit to exit the application"),
+                 actionButton("quit", "Quit")
+               
+                 
+               ),
+               br(),
 
                p('Note: Input values must be separated by tabs. Copy and paste from Excel.'),
-               p(HTML("<b><div style='background-color:#FADDF2;border:1px solid black;'>Your data needs to have exactly the same header (variable names) in the first row.</div></b>")),
+               p("Your data needs to have exactly the same header (variable names) in the first row."),
 
                strong('Option:'),
                checkboxInput("moderator", label = strong("The data contains a categorical moderator (subgroup) variable."), value = T),
@@ -161,7 +159,20 @@ shinyUI(bootstrapPage(
                br()
 
       ),
-
+ navbarMenu("Correlation model measures",
+            tabPanel("Correlation model options",
+                     
+                     radioButtons("cormeasures", strong("Correlation model measures"),
+                                  c("raw correlation coefficient" = "COR",
+                                    "raw correlation coefficient corrected for its slight negative bias" = "UCOR",
+                                    "Fisher’s r-to-z transformed correlation coefficient" = "ZCOR"
+                                  ), selected = "ZCOR"),
+                     p(h6('Fisher’s r-to-z transformed correlation coefficient is the default estimator for the metafor package')),
+                     
+                     verbatimTextOutput('cormeasures.out')
+                     
+            ) ),
+ navbarMenu("Model Estimators",
       tabPanel("Random-effects model estimators",
 
                radioButtons("model", strong("Random-effects model estimators"),
@@ -175,23 +186,233 @@ shinyUI(bootstrapPage(
                               "Generalized Q-statistic" = "GENQ"
                             ), selected = "REML"),
                p(h6('Restricted maximum-likelihood is the default estimator for the metafor package')),
-               #p(model.out)
+               
                verbatimTextOutput('model.out')
 
+     ) ),
+ navbarMenu("Publication Bias Options",
+      tabPanel("Trim and Fill Options",
+
+               radioButtons("trimfillopt", strong("Trim and Fill Estimator"),
+                            c("L0" = "L0",
+                              "R0" = "R0",
+                              "Q0" = "Q0"
+                            ), selected = "L0"),
+               p(h6('Three different estimators for the number of missing studies were proposed by Duval and Tweedie (2000a, 2000b). The default estimator for the metafor package is L0')),
+               
+               verbatimTextOutput('trimfillopt.out')
+
       ),
 
-      tabPanel("Output Options",
-
-               radioButtons("height", strong("Height of output plots"),
-                            c("500 Pixals" = "500",
-                              "1000 Pixals" = "1000"
-                            ), selected = "500"),
-               p(h6("I'll fix this later")),
-               verbatimTextOutput('height.out')
-
+      tabPanel("Regression Test for Funnel Plot Asymmetry",
+               
+               radioButtons("regtestpredictor", strong("Predictor"),
+                            c("standard error" = "sei",
+                              "sampling variance" = "vi",
+                              "sample size" = "ni",
+                              "inverse of the sample size" = "ninv"
+                            ), selected = "sei"),
+               p(h6('Predictor used for the regression test. The default in the metafor package is standard error')),
+               
+               verbatimTextOutput('regtestpredictor.out')
+               
       ),
+      
+      tabPanel("File Drawer Analysis",
+               
+               radioButtons("filedraweranalysis", strong("File Drawer Analysis"),
+                            c("Rosenthal" = "Rosenthal",
+                              "Orwin" = "Orwin",
+                              "Rosenberg" = "Rosenberg"
+                            ), selected = "Rosenthal"),
+               p(h6('Method for running file drawer analysis. The default in the metafor package is Rosenthal')),
+               p('The Rosenthal method (sometimes called a ‘file drawer analysis’) calculates the number of studies
+averaging null results that would have to be added to the given set of observed outcomes to reduce
+the combined significance level (p-value) to a target alpha level (e.g., .05). The calculation is based
+on Stouffer’s method to combine p-values and is described in Rosenthal (1979).'),
+p('The Orwin method calculates the number of studies averaging null results that would have to be
+added to the given set of observed outcomes to reduce the (unweighted) average effect size to a
+target (unweighted) average effect size. The method is described in Orwin (1983).'),
+p('The Rosenberg method calculates the number of studies averaging null results that would have to be
+added to the given set of observed outcomes to reduce significance level (p-value) of the (weighted)
+average effect size (based on a fixed-effects model) to a target alpha level (e.g., .05). The method is
+described in Rosenberg (2005).'),
+               
+               verbatimTextOutput('filedraweranalysis.out')
+               
+      )),
+navbarMenu("Effect Size Calculator",
+          tabPanel("One Study with Means, SDs, Ns",
+         
+                   verticalLayout(
+                     
+                     wellPanel(
+                       fluidRow(
+                         column(3,
+                      p(strong("Group 1:")),
+                     
+                     numericInput("nx", " Sample size (n)", 21),
+                     
+                     numericInput("mx", " Mean", 61.33),
+                     
+                     numericInput("sdx", " SD", 16.43),
+                     
+                     p(br())
+                         ),
+                     column(4, offset = 1,
+                     p(strong("Group 2:")),
+                     
+                     numericInput("ny", " Sample size (n)", 24),
+                     
+                     numericInput("my", " Mean", 59.79),
+                     
+                     numericInput("sdy", " SD", 18.50),
+                     
+                     p(br())
+                       ),
+                     column(4,
+                     strong('Option:'),
+                     
+                     
+                     checkboxInput("varequal", "t-test with equal variances assumed", FALSE),
+                     
+                     
+                     checkboxInput("vartest", "Show test for equality of variances", FALSE),
+                     helpText("Click here to update your results."),
+                     submitButton("Update View")
+                     )
+                     
+                   )),
+                   
+                     h3("Checking the input data"),
+                     tableOutput("values"),
+                                
+                    br(),
+                                
+                     h3("Mean of the differences and 95% CI"),
+                     verbatimTextOutput("difference.out"),
+                                
+                     br(),
+                                
+                     h3("t-test"),
+                     verbatimTextOutput("ttest.out"),
+                     h3(""),
+                     verbatimTextOutput("vartest.out"),
+                                
+                     br(),
+                                
+                     h3("Effect size indices"),      
+                     br()
+                                
+                       )
+         
+          ),
+          tabPanel("ANCOVA F-statistic to Effect Size",
+                   verticalLayout(
+                     
+                     wellPanel(
+                       fluidRow(
+                         column(3,
+                                p(strong("ANCOVA F-statistic to Effect Size")),
+                                
+                                numericInput("ancovaf", " F value from ANCOVA", 21),
+                                
+                                numericInput("ancovafn1", " Treatment group sample size", 50),
+                                
+                                numericInput("ancovafn2", " Comparison group sample size", 50),
+                                
+                                p(br())
+                         ),
+                         column(4, offset = 1,
+                                
+                                numericInput("anovafcovar", " Covariate outcome correlation or multiple correlation", 0.24),
+                                
+                                numericInput("anovafcovarnum", " Number of covariates", 3),
+                                
+                                numericInput("sdy", " SD", 18.50),
+                                helpText("Click here to update your results"),
+                                submitButton("Update View"),
+                                p(br())
+                         )
 
-
+                         
+                       )),
+                     
+                     
+                     h3("Effect size indices"),
+                     verbatimTextOutput("ancovaf.out"),
+                     p(br())
+                     
+                   )
+                   
+          ),
+tabPanel("Chi-Squared Statistic to Effect Size",
+         verticalLayout(
+           
+           wellPanel(
+             fluidRow(
+               column(3,
+                      p(strong("Chi-Squared Statistic to Effect Size")),
+                      
+                      numericInput("chisquaredstat", " Chi squared statistic from primary study.", 5.3),
+                      
+                      numericInput("chisquaredn1", " Sample size in primary study.", 50),
+                      
+                      p(br())
+               ),
+               column(4, offset = 1,
+                      helpText("Click here to update your results"),
+                      submitButton("Update View"),
+                      p(br())
+               )
+               
+               
+             )),
+           
+           
+           h3("Effect size indices"),
+           verbatimTextOutput("chisquared.out"),
+           p(br())
+           
+         )
+         
+),
+tabPanel("p-value to Effect Size",
+         verticalLayout(
+           
+           wellPanel(
+             fluidRow(
+               column(3,
+                      p(strong("p-value to Effect Size")),
+                      
+                      numericInput("pvaluenum", " p-value.", 0.01),
+                      numericInput("pvaluen1", " Sample size of treatment group.", 50),                      
+                      numericInput("pvaluen2", " Sample size of comparison group.", 50),
+                      
+                      radioButtons("pvaluetail", strong("One or two-tailed p-value."),
+                                   c("One tail" = "one",
+                                     "Two tail" = "two"
+                                   ), selected = "two"),
+                      
+                      p(br())
+               ),
+               column(4, offset = 1,
+                      helpText("Click here to update your results"),
+                      submitButton("Update View"),
+                      p(br())
+               )
+               
+               
+             )),
+           
+           
+           h3("Effect size indices"),
+           verbatimTextOutput("pvaluees.out"),
+           p(br())
+           
+         )
+         
+)),
 
       tabPanel("About",
 
@@ -215,6 +436,7 @@ shinyUI(bootstrapPage(
                code('library(MAc)'),br(),
                code('library(quantreg)'),br(),
                code('library(ggplot2)'),br(),
+               code('library(compute.es)'),br(),
 
 
                br(),
@@ -259,4 +481,4 @@ shinyUI(bootstrapPage(
       )
     )
   )
-))
+

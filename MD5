@@ -1,6 +1,7 @@
-4b59ac2cf164846133a036abd0ddecfe *DESCRIPTION
-184cc4daa314743698fe89b49b28cc52 *NAMESPACE
+6a8a4fd5ef3c413db7fa10f8b80d6330 *DESCRIPTION
+760e8dbb2fba337afe14ac598b7bf02d *NAMESPACE
 06d4ae3d90d518d8b378c162621f54f0 *R/MAVIS.R
-28e498547ea05b9eff072121343571a3 *inst/shiny/server.R
-a42368debf50979eda4e83f610c71ece *inst/shiny/ui.R
+cfbac5ab410140ebcc52dc20eb74d535 *README.md
+2fd1b2823fd0aa4b8b9789553dc103e6 *inst/shiny/server.R
+220e57b293cde398f0b12a1edfbdc00b *inst/shiny/ui.R
 160ba16852e36f44e51c2613ea0d3841 *man/startmavis.Rd
