@@ -1,76 +1,84 @@
-
+library(shiny)
+library(shinyAce)
+library(meta)
+library(metafor)
+library(MAd)
+library(MAc)
+library(quantreg)
+library(ggplot2)
+library(compute.es)
+library(SCMA)
+library(SCRT)
 
 shinyServer(function(input, output, session) {
-#  library(shiny)
-#  library(shinyAce)
-#  library(meta)
-#  library(metafor)
-#   library(MAd)
-#   library(MAc)
-#   library(quantreg)
-#   library(ggplot2)
-  options(warn=-1)
 
+  options(warn=-1)
+  bayoption1 = FALSE
 
   q <- observe({
     # Stop the app when the quit button is clicked
     if (input$quit == 1) stopApp()
   })
-
-
-  #
-  #reme <- reactive({input$model})
-
-
-
-  # First calculation to be used later
-  W.data <- reactive({
-
-    dat <- read.csv(text=input$text, sep="\t")
-
-
-    if (input$type == "mdms") {
-
-      dat <- escalc(measure="SMD", n1i=N1, n2i=N2,
-                    m1i=M1, m2i=M2,
-                    sd1i=SD1, sd2i=SD2,
-                    data=dat, append=TRUE)
-
-      dat$ES <- dat$yi
-      dat$yi <- NULL
-      dat$SV <- dat$vi # SV=sampling variances
-      dat$vi <- NULL
-
-      list(dat = dat) # To be used later
-    }
-
-
-    else if (input$type == "mdes") {
-
-      df <- (dat$N1 + dat$N2) - 2
-      j <- 1 - (3/(4 * df - 1))
-      g <- j * dat$d
-      dat$ES <- g
-
-      dat$SV <- (((dat$N1+dat$N2)/(dat$N1*dat$N2))+((dat$ES*dat$ES)/(2*(dat$N1+dat$N2))))
-
-      list(dat = dat) # To be used later
-    }
-
-
-    else if (input$type == "cor") {
-
-      dat <- escalc(measure=input$cormeasures, ni=N, ri=r, data=dat, append=TRUE)
-      dat$FZ <- dat$yi
-      dat$yi <- NULL
-      dat$SV <- dat$vi # SV=sampling variances
-      dat$vi <- NULL
-
-      list(dat = dat) # To be used later
-
-    }
-  })
-
+  
+W.data <- reactive({
+  
+  dat <- read.csv(text=input$text, sep="\t")
+  
+  
+  if (input$type == "mdms") {
+    
+    dat <- escalc(measure="SMD", n1i=N1, n2i=N2,
+                  m1i=M1, m2i=M2,
+                  sd1i=SD1, sd2i=SD2,
+                  data=dat, append=TRUE)
+    
+    dat$ES <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi # SV=sampling variances
+    dat$vi <- NULL
+    
+    list(dat = dat) # To be used later
+  }
+  
+  
+  else if (input$type == "mdes") {
+    
+    df <- (dat$N1 + dat$N2) - 2
+    j <- 1 - (3/(4 * df - 1))
+    g <- j * dat$d
+    dat$ES <- g
+    
+    dat$SV <- (((dat$N1+dat$N2)/(dat$N1*dat$N2))+((dat$ES*dat$ES)/(2*(dat$N1+dat$N2))))
+    
+    list(dat = dat) # To be used later
+  }
+  
+  
+  else if (input$type == "cor") {
+    
+    dat <- escalc(measure=input$cormeasures, ni=N, ri=r, data=dat, append=TRUE)
+    dat$FZ <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi # SV=sampling variances
+    dat$vi <- NULL
+    
+    list(dat = dat) # To be used later
+    
+  }
+  else if (input$type == "or") {
+    
+    dat <- escalc(input$dichotomousoptions, ai = upoz, bi = uneg, ci = kpoz, di = kneg,
+                  data=dat, append=TRUE)
+    
+    dat$ES <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi # SV=sampling variances
+    dat$vi <- NULL
+    
+    list(dat = dat) # To be used later
+  }    
+  
+})
 
 
 
@@ -130,102 +138,125 @@ shinyServer(function(input, output, session) {
 
       list(FE.res = FE.res) # To be used later
     }
-  })
-
-
-
-
-
-  # Random effects model to be used later
-  RE.est  <- reactive({
-
-    if (input$type == "mdms") {
-
+    
+    else if (input$type == "or") {
+      
       dat <- read.csv(text=input$text, sep="\t")
-
-      dat <- escalc(measure="SMD", n1i=N1, n2i=N2,
-                    m1i=M1, m2i=M2,
-                    sd1i=SD1, sd2i=SD2,
+      
+      dat <- escalc(input$dichotomousoptions, ai = upoz, bi = uneg, ci = kpoz, di = kneg,
                     data=dat, append=TRUE)
-
+      
       dat$ES <- dat$yi
-      dat$yi <- NULL
-      dat$SV <- dat$vi
-      dat$vi <- NULL
-
-      RE.res <- rma(ES, SV, method=input$model, data=dat, slab=paste(Study))
-
-      list(RE.res = RE.res) # To be used later
-    }
-
-
-    else if (input$type == "mdes") {
-
-      dat <- read.csv(text=input$text, sep="\t")
-
-      df <- (dat$N1 + dat$N2) - 2
-      j <- 1 - (3/(4 * df - 1))
-      g <- j * dat$d
-      dat$ES <- g
-
-      dat$SV <- (((dat$N1+dat$N2)/(dat$N1*dat$N2))+((dat$ES*dat$ES)/(2*(dat$N1+dat$N2))))
-
-      RE.res <- rma(ES, SV, method=input$model, data=dat, slab=paste(Study))
-
-      list(RE.res = RE.res) # To be used later
-    }
-
-
-    else if (input$type == "cor") {
-
-      dat <- read.csv(text=input$text, sep="\t")
-
-      dat <- escalc(measure=input$cormeasures, ni=N, ri=r, data=dat, append=TRUE)
-      dat$FZ <- dat$yi
       dat$yi <- NULL
       dat$SV <- dat$vi # SV=sampling variances
       dat$vi <- NULL
-
-      RE.res <- rma(FZ, SV, data=dat, method =input$model, slab=paste(Study))
-
-      list(RE.res = RE.res) # To be used later
-
+      
+      FE.res <- rma(ES, SV, method="FE", data=dat, slab=paste(Study))
+      
+      list(FE.res = FE.res) # To be used later
     }
   })
 
-
-
-
-
-  ################################################
-  # Displaying the first calculation
-  ################################################
-
-  data <- reactive({
-
+RE.est  <- reactive({
+  
+  if (input$type == "mdms") {
+    
     dat <- read.csv(text=input$text, sep="\t")
+    
+    dat <- escalc(measure="SMD", n1i=N1, n2i=N2,
+                  m1i=M1, m2i=M2,
+                  sd1i=SD1, sd2i=SD2,
+                  data=dat, append=TRUE)
+    
+    dat$ES <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi
+    dat$vi <- NULL
+    
+    RE.res <- rma(ES, SV, method=input$model, data=dat, knha=input$khadjust, slab=paste(Study))
+    
+    list(RE.res = RE.res) # To be used later
+  }
+  
+  
+  else if (input$type == "mdes") {
+    
+    dat <- read.csv(text=input$text, sep="\t")
+    
+    df <- (dat$N1 + dat$N2) - 2
+    j <- 1 - (3/(4 * df - 1))
+    g <- j * dat$d
+    dat$ES <- g
+    
+    dat$SV <- (((dat$N1+dat$N2)/(dat$N1*dat$N2))+((dat$ES*dat$ES)/(2*(dat$N1+dat$N2))))
+    
+    RE.res <- rma(ES, SV, method=input$model, data=dat, slab=paste(Study))
+    
+    list(RE.res = RE.res) # To be used later
+  }
+  
+  
+  else if (input$type == "cor") {
+    
+    dat <- read.csv(text=input$text, sep="\t")
+    
+    dat <- escalc(measure=input$cormeasures, ni=N, ri=r, data=dat, append=TRUE)
+    dat$FZ <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi # SV=sampling variances
+    dat$vi <- NULL
+    
+    RE.res <- rma(FZ, SV, data=dat, method =input$model, slab=paste(Study))
+    
+    list(RE.res = RE.res) # To be used later
+    
+  }
+  else if (input$type == "or") {
+    
+    dat <- read.csv(text=input$text, sep="\t")
+    
+    dat <- escalc(input$dichotomousoptions, ai = upoz, bi = uneg, ci = kpoz, di = kneg,
+                  data=dat, append=TRUE)
+    
+    dat$ES <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi # SV=sampling variances
+    dat$vi <- NULL
+    
+    
+    
+    
+    RE.res <- rma(ES, SV, method=input$model, data=dat, slab=paste(Study))
+    
+    list(RE.res = RE.res) # To be used later
+  }
+})
 
 
-    if (input$type == "mdms") {
-
-      dat <- escalc(measure="SMD", n1i=N1, n2i=N2,
-                    m1i=M1, m2i=M2,
-                    sd1i=SD1, sd2i=SD2,
-                    data=dat, append=TRUE)
-
-      dat$ES <- round(dat$yi, 3)
-      dat$yi <- NULL
-      dat$SV <- round(dat$vi, 3) # SV=sampling variances
-      dat$vi <- NULL
-
-      cat("\n","ES = Effect size [Hedges's g]", "\n",
-          "SV = Sampling variance [sqrt(SV) = Std err]", "\n", "\n"
-      ) # ," W = Inverse variance weight", "\n", "\n"
-      cat("---","\n")
-
-      print(dat)
-    }
-
+data <- reactive({
+  
+  dat <- read.csv(text=input$text, sep="\t")
+  
+  
+  if (input$type == "mdms") {
+    
+    dat <- escalc(measure="SMD", n1i=N1, n2i=N2,
+                  m1i=M1, m2i=M2,
+                  sd1i=SD1, sd2i=SD2,
+                  data=dat, append=TRUE)
+    
+    dat$ES <- round(dat$yi, 3)
+    dat$yi <- NULL
+    dat$SV <- round(dat$vi, 3) # SV=sampling variances
+    dat$vi <- NULL
+    
+    cat("\n","ES = Effect size [Hedges's g]", "\n",
+        "SV = Sampling variance [sqrt(SV) = Std err]", "\n", "\n"
+    ) # ," W = Inverse variance weight", "\n", "\n"
+    cat("---","\n")
+    
+    print(dat)
+  }
 
     else if (input$type == "mdes") {
 
@@ -244,7 +275,6 @@ shinyServer(function(input, output, session) {
       print(dat)
     }
 
-
     else if (input$type == "cor") {
 
       dat <- escalc(measure=input$cormeasures, ni=N, ri=r, data=dat, append=TRUE)
@@ -259,6 +289,25 @@ shinyServer(function(input, output, session) {
 
       print(dat)
 
+    }
+    
+    else if (input$type == "or") {
+      
+      
+      dat <- escalc(input$dichotomousoptions, ai = upoz, bi = uneg, ci = kpoz, di = kneg,
+                    data=dat, append=TRUE)
+      
+      dat$ES <- dat$yi
+      dat$yi <- NULL
+      dat$SV <- dat$vi # SV=sampling variances
+      dat$vi <- NULL
+      
+      cat("\n","ES = Effect size [Hedges's g]", "\n",
+          "SV = Sampling variance [sqrt(SV) = Std err]", "\n", "\n"
+      ) # ," W = Inverse variance weight", "\n", "\n"
+      cat("---","\n")
+      
+      print(dat)
     }
   })
 
@@ -318,30 +367,42 @@ shinyServer(function(input, output, session) {
       })
       FE.res
     }
-  })
-
-
-
-
-
-  re <- reactive({
-
-    if (input$type == "mdms") {
-
-      RE.res <- RE.est()$RE.res
-
-      cat("The RE model regards the K studies as a sample of","\n")
-      cat(" a larger universe of studies (Kovalchik, 2013).","\n")
+    else if (input$type == "or") {
+      
+      FE.res <- FE.est()$FE.res
+      
+      cat("The FE model is a description of the K studies (Kovalchik, 2013).","\n")
       cat("---","\n")
-      withProgress(message = 'Calculating', detail = 'Random effects model', value = 0, {
+      withProgress(message = 'Calculating', detail = 'Fixed effects model', value = 0, {
         for (i in 1:10) {
           incProgress(1/10)
           Sys.sleep(0.05)
         }
       })
-      RE.res
+      FE.res
     }
+  })
 
+
+
+re <- reactive({
+  
+  if (input$type == "mdms") {
+    
+    RE.res <- RE.est()$RE.res
+    
+    cat("The RE model regards the K studies as a sample of","\n")
+    cat(" a larger universe of studies (Kovalchik, 2013).","\n")
+    cat("---","\n")
+    withProgress(message = 'Calculating', detail = 'Random effects model', value = 0, {
+      for (i in 1:10) {
+        incProgress(1/10)
+        Sys.sleep(0.05)
+      }
+    })
+    RE.res
+  }
+      
 
     else if (input$type == "mdes") {
 
@@ -359,7 +420,6 @@ shinyServer(function(input, output, session) {
       RE.res
 
     }
-
 
     else if (input$type == "cor") {
 
@@ -372,33 +432,37 @@ shinyServer(function(input, output, session) {
       cat(" a larger universe of studies (Kovalchik, 2013).","\n")
 
     }
+    
+    else if (input$type == "or") {
+      
+      RE.res <- RE.est()$RE.res
+      
+      cat("The RE model regards the K studies as a sample of","\n")
+      cat(" a larger universe of studies (Kovalchik, 2013).","\n")
+      cat("---","\n")
+      withProgress(message = 'Calculating', detail = 'Random effects model', value = 0, {
+        for (i in 1:10) {
+          incProgress(1/10)
+          Sys.sleep(0.05)
+        }
+      })
+      RE.res
+    }
   })
 
 
 
 
 
-  ################################################
-  # Forest plot
-  ################################################
-
-  makefePlot <- function(){
-
-    if (input$type == "mdms") {
-
-      FE.res <- FE.est()$FE.res
-
-      forest(FE.res)
-    }
-
-
-    else if (input$type == "mdes") {
-
-      FE.res <- FE.est()$FE.res
-
-      forest(FE.res)
-    }
-
+makefePlot <- function(){
+  
+  if (input$type == "mdms") {
+    
+    FE.res <- FE.est()$FE.res
+    
+    forest(FE.res)
+  }
+  
 
     else if (input$type == "cor") {
 
@@ -406,6 +470,12 @@ shinyServer(function(input, output, session) {
 
       forest(FE.res, transf=transf.ztor)
 
+    }
+    else if (input$type == "or") {
+      
+      FE.res <- FE.est()$FE.res
+      
+      forest(FE.res)
     }
   }
 
@@ -452,6 +522,13 @@ makerePlot <- function(){
     forest(RE.res, transf=transf.ztor)
 
   }
+  if (input$type == "or") {
+    
+    RE.res <- RE.est()$RE.res
+    
+    forest(RE.res)
+    
+  }
 }
 
 
@@ -478,31 +555,53 @@ output$rePlot <- renderPlot(
 makeFunFixPlot <- function(){
 
   if (input$type == "mdms") {
-
+    
+    if (input$contourenhancedbox == TRUE) {
     FE.res <- FE.est()$FE.res
-
-    metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt))
-
-  }
+    metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+    FE.res <- FE.est()$FE.res
+    metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+  }}
 
 
   else if (input$type == "mdes") {
-
-    FE.res <- FE.est()$FE.res
-
-    metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt))
-
-  }
+    
+    if (input$contourenhancedbox == TRUE) {
+      FE.res <- FE.est()$FE.res
+      metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      FE.res <- FE.est()$FE.res
+      metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }}
 
 
   else if (input$type == "cor") {
-
-    FE.res <- FE.est()$FE.res
-
-    metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt))
-
+    
+    if (input$contourenhancedbox == TRUE) {
+      FE.res <- FE.est()$FE.res
+      metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      FE.res <- FE.est()$FE.res
+      metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }}
+  
+  
+  else if (input$type == "or") {
+    
+    if (input$contourenhancedbox == TRUE) {
+      FE.res <- FE.est()$FE.res
+      metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      FE.res <- FE.est()$FE.res
+      metafor::funnel(trimfill(FE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }} 
   }
-}
+
 
 
 output$FunFixPlot <- renderPlot(
@@ -518,35 +617,54 @@ output$FunFixPlot <- renderPlot(
 
 
 
-
-
 makeFunRandPlot <- function(){
 
   if (input$type == "mdms") {
-
-    RE.res <- RE.est()$RE.res
-
-    metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt))
-
-  }
+    
+    if (input$contourenhancedbox == TRUE) {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }}
 
 
   else if (input$type == "mdes") {
-
-    RE.res <- RE.est()$RE.res
-
-    metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt))
-
-  }
+    
+    if (input$contourenhancedbox == TRUE) {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }}
 
 
   else if (input$type == "cor") {
-
-    RE.res <- RE.est()$RE.res
-
-    metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt))
-
-  }
+    
+    if (input$contourenhancedbox == TRUE) {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }}
+  
+  
+  else if (input$type == "or") {
+    
+    if (input$contourenhancedbox == TRUE) {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), level=c(90, 95, 99), shade=c("white", "gray", "darkgray"), refline=0, yaxis=input$regtestpredictor)
+    } 
+    else {
+      RE.res <- RE.est()$RE.res
+      metafor::funnel(trimfill(RE.res, estimator=input$trimfillopt), yaxis=input$regtestpredictor)
+    }}
 }
 
 
@@ -577,10 +695,12 @@ asy <- reactive({
 
     RE.res <- RE.est()$RE.res
 
-    regt <- regtest(RE.res, model="lm", predictor=input$regtestpredictor)
+    regt <- regtest(RE.res, model=input$regtestmodeltype, predictor=input$regtestpredictor, ret.fit=input$regtestfullmodel)
+    rankt <- ranktest(RE.res)
     value <- fsn(y = RE.res$yi, v = RE.res$vi, type=input$filedraweranalysis)
 
     return(list('No publication bias if p > .05 (Nonsignificant)' = regt,
+                'A high correlation would indicate that the funnel plot is asymmetric, which may be a result of publication bias.' = rankt,
                 'File drawer analysis' = value))
   }
 
@@ -589,10 +709,12 @@ asy <- reactive({
 
     RE.res <- RE.est()$RE.res
 
-    regt <- regtest(RE.res, model="lm", predictor=input$regtestpredictor)
+    regt <- regtest(RE.res, model=input$regtestmodeltype, predictor=input$regtestpredictor)
+    rankt <- ranktest(RE.res)
     value <- fsn(y = RE.res$yi, v = RE.res$vi, type=input$filedraweranalysis)
 
     return(list('No publication bias if p > .05 (Nonsignificant)' = regt,
+                'A high correlation would indicate that the funnel plot is asymmetric, which may be a result of publication bias.' = rankt,
                 'File drawer analysis' = value))
 
   }
@@ -602,17 +724,29 @@ asy <- reactive({
 
     RE.res <- RE.est()$RE.res
 
-    regt <- regtest(RE.res, model="lm", predictor=input$regtestpredictor)
+    regt <- regtest(RE.res, model=input$regtestmodeltype, predictor=input$regtestpredictor)
+    rankt <- ranktest(RE.res)
     value <- fsn(y = RE.res$yi, v = RE.res$vi, type=input$filedraweranalysis)
 
     return(list('No publication bias if p > .05 (Nonsignificant)' = regt,
+                'A high correlation would indicate that the funnel plot is asymmetric, which may be a result of publication bias.' = rankt,
+                'File drawer analysis' = value))
+  }
+  
+  
+  else if (input$type == "or") {
+    
+    RE.res <- RE.est()$RE.res
+    
+    regt <- regtest(RE.res, model=input$regtestmodeltype, predictor=input$regtestpredictor)
+    rankt <- ranktest(RE.res)
+    value <- fsn(y = RE.res$yi, v = RE.res$vi, type=input$filedraweranalysis)
+    
+    return(list('No publication bias if p > .05 (Nonsignificant)' = regt,
+                'A high correlation would indicate that the funnel plot is asymmetric, which may be a result of publication bias.' = rankt,
                 'File drawer analysis' = value))
   }
 })
-
-
-
-
 
 ################################################
 # Moderator analysis
@@ -715,7 +849,28 @@ modAnalysis <- reactive({
   #cat("No moderator (subgroup) analysis is conducted.","\n")
 
   #}
-
+  else if (input$type == "or") {
+    
+    dat <- read.csv(text=input$text, sep="\t")
+    
+    dat <- escalc(input$dichotomousoptions, ai = upoz, bi = uneg, ci = kpoz, di = kneg,
+                  data=dat, append=TRUE)
+    
+    dat$ES <- dat$yi
+    dat$yi <- NULL
+    dat$SV <- dat$vi
+    dat$vi <- NULL
+    
+    fixed <- MAd::macat(ES, SV, mod = Moderator, data=dat, method= "fixed")
+    random <- MAd::macat(ES, SV, mod = Moderator, data=dat, method= "random")
+    
+    cat("---", "\n", "Fixed effects model:", "\n")
+    print(fixed)
+    
+    cat("\n", "\n", "---", "\n", "Random effects model:", "\n")
+    print(random)
+    
+  }
 })
 
 
@@ -752,6 +907,15 @@ ModFixGraph <- function(){
 
     MAd::plotcat(FZ, SV, mod = Moderator, data = dat, method= "fixed", modname= "Moderator")
 
+  }
+  
+  
+  else if (input$type == "or") {
+    
+    dat <- W.data()$dat
+    
+    MAd::plotcat(ES, SV, mod = Moderator, data = dat, method= "fixed", modname= "Moderator")
+    
   }
 
 }
@@ -798,6 +962,15 @@ ModRandGraph <- function(){
 
     MAd::plotcat(FZ, SV, mod = Moderator, data = dat, method= "random", modname= "Moderator")
 
+  }
+  
+  
+  else if (input$type == "cor") {
+    
+    dat <- W.data()$dat
+    
+    MAd::plotcat(FZ, SV, mod = Moderator, data = dat, method= "random", modname= "Moderator")
+    
   }
 
 }
@@ -963,7 +1136,7 @@ output$vartest.out <- renderPrint({
 })
 
 ################################################
-# Mean Values from ANCOVA F-statistic to Effect Size
+# ANCOVA F-statistic to Effect Size
 ################################################
 
   a.fesoutput <- reactive({
@@ -975,6 +1148,17 @@ output$vartest.out <- renderPrint({
   })
 
 ################################################
+# Mean Values from ANCOVA F-statistic to Effect Size
+################################################
+
+a.mesoutput <- reactive({
+  a.mes(input$ancovamean1, input$ancovamean2, input$ancovameansd, input$ancovameann1, input$ancovameann2, input$ancovameancovar, input$ancovameancovarnumber)
+})
+
+output$ancovamean.out <- renderPrint({
+  a.mesoutput()
+})
+################################################
 # Chi-Squared Statistic to Effect Size
 ################################################
 
@@ -985,6 +1169,22 @@ output$vartest.out <- renderPrint({
   output$chisquared.out <- renderPrint({
     chisquaredes()
   })
+
+################################################
+# Outcome Measures for Two-Group Comparisons
+################################################
+
+twobytwogroups <- reactive({
+  escalc(measure=input$twoxtwovalue, ai=input$ai, bi=input$bi, ci=input$ci, di=input$di,
+         add=1/2, to="only0", drop00=FALSE, vtype="LS",
+         var.names=c("Effect Size Estimates","Corresponding Sampling
+Variances"), add.measure=FALSE,
+         append=TRUE, replace=TRUE, digits=4)
+})
+
+output$twobytwogroups.out <- renderPrint({
+  twobytwogroups()
+})
 
 ################################################
 # p-value to Effect Size
@@ -999,39 +1199,142 @@ output$pvaluees.out <- renderPrint({
 })
 
 ################################################
+# Single Case Design - Effect Size
+################################################
+
+SCDES <- reactive({
+  ES(design = input$SCDtype, ES = input$SCDes, data = read.csv(text=input$SCDdata))
+})
+
+output$SCDES.out <- renderPrint({
+  SCDES()
+})
+
+################################################
+# Single Case Design - Graph 
+################################################
+
+SCDGRAPH <- reactive({
+  SCRT::graph1(design = input$SCDtype, data = read.csv(text=input$SCDdata), xlab= input$SCDXAXIS, ylab= input$SCDYAXIS)
+})
+
+output$SCDGRAPH.out <- renderPlot({
+  SCDGRAPH()
+})
+
+
+
+################################################
 # R session info
 ################################################
 
 info <- reactive({
   info1 <- paste("This analysis was performed on ", format(Sys.time(), "%A, %B %d %Y at %I:%M:%S %p"), ".", sep = "")
   info2 <- paste(strsplit(R.version$version.string, " \\(")[[1]][1], " was used for this session.", sep = "")
+  info2a <- paste(" ")
   info3 <- paste("Package version infomation for this session:")
+  info3a <- paste(" ")
+  info3b <- paste("Packages used for the computational back-end:")
+  info3c <- paste("compute.es", packageVersion("compute.es"))
   info4 <- paste("ggplot2", packageVersion("ggplot2"))
   info5 <- paste("MAc", packageVersion("MAc"))
   info6 <- paste("MAd", packageVersion("MAd"))
   info7 <- paste("meta", packageVersion("meta"))
   info8 <- paste("metafor", packageVersion("metafor"))
   info9 <- paste("quantreg", packageVersion("quantreg"))
+  info9a <- paste("SCMA", packageVersion("SCMA"))
+  info9b <- paste("SCRT", packageVersion("SCRT"))
+  info9c <- paste(" ")
+  info9d <- paste("Packages used for the graphical user interface:")
   info10 <- paste("shiny", packageVersion("shiny"))
   info11 <- paste("shinyAce", packageVersion("shinyAce"))
-
+  info12 <- paste("shinyBS", packageVersion("shinyBS"))
+  
   cat(sprintf(info1), "\n")
   cat(sprintf(info2), "\n")
+  cat(sprintf(info2a), "\n")
   cat(sprintf(info3), "\n")
+  cat(sprintf(info3a), "\n")
+  cat(sprintf(info3b), "\n")
+  cat(sprintf(info3c), "\n")
   cat(sprintf(info4), "\n")
   cat(sprintf(info5), "\n")
   cat(sprintf(info6), "\n")
   cat(sprintf(info7), "\n")
   cat(sprintf(info8), "\n")
   cat(sprintf(info9), "\n")
+  cat(sprintf(info9a), "\n")
+  cat(sprintf(info9b), "\n")
+  cat(sprintf(info9c), "\n")
+  cat(sprintf(info9d), "\n")
   cat(sprintf(info10), "\n")
   cat(sprintf(info11), "\n")
+  cat(sprintf(info12), "\n")
   withProgress(message = 'Rendering', detail = 'R session info', value = 0, {
     for (i in 1:10) {
       incProgress(1/10)
     }
   })
 })
+
+################################################
+# R citation info
+################################################
+
+# cite <- reactive({
+#   cite1 <- paste("This analysis was performed on ", format(Sys.time(), "%A, %B %d %Y at %I:%M:%S %p"), ".", sep = "")
+#   cite2 <- paste(strsplit(R.version$version.string, " \\(")[[1]][1], " was used for this session.", sep = "")
+#   cite3 <- paste("Package citation infomation for this session:")
+#   cite4 <- paste("ggplot2", citation("ggplot2"))
+#   cite5 <- paste("MAc", citation("MAc"))
+#   cite6 <- paste("MAd", citation("MAd"))
+#   cite7 <- paste("meta", citation("meta"))
+#   cite8 <- paste("metafor", citation("metafor"))
+#   cite9 <- paste("quantreg", citation("quantreg"))
+#   cite10 <- paste("shiny", citation("shiny"))
+#   cite11 <- paste("shinyAce", citation("shinyAce"))
+#   
+#   cat(sprintf(cite1), "\n")
+#   cat(sprintf(cite2), "\n")
+#   cat(sprintf(cite3), "\n")
+#   cat(sprintf(cite4), "\n")
+#   cat(sprintf(cite5), "\n")
+#   cat(sprintf(cite6), "\n")
+#   cat(sprintf(cite7), "\n")
+#   cat(sprintf(cite8), "\n")
+#   cat(sprintf(cite9), "\n")
+#   cat(sprintf(cite10), "\n")
+#   cat(sprintf(cite11), "\n")
+# })
+
+################################################
+# PDF Download Test
+################################################
+# makePlot <- function() {
+#   plot(1:input$n123, 1:input$n123)
+# }
+# 
+# asy.test <- renderText ({
+#   print(asy)
+# })
+# 
+# output$myPlot <- renderPlot({
+#   makePlot()
+# }, height=400, width=800)
+# 
+# output$downloadPlot <- downloadHandler(
+#   filename = function() { 
+#     'report.pdf'
+#   },
+#   content = function(file) {
+#     pdf(file, onefile=T, width=8.5, height=11)
+#     makePlot()
+#     SCDGRAPH()
+#     asy.test()
+#     dev.off()
+#   },
+#   contentType = 'application/pdf'
+# )
 
 
 ################################################
@@ -1040,6 +1343,8 @@ info <- reactive({
 output$model.out <- renderPrint({ input$model })
 
 output$cormeasures.out <- renderPrint({ input$cormeasures })
+
+output$dichotomousoptions.out <- renderPrint({ input$dichotomousoptions })
 
 output$trimfillopt.out <- renderPrint({paste("Selected method is:", input$trimfillopt )})
 
@@ -1052,7 +1357,9 @@ output$height.out <- renderPrint({paste(input$height,"px", sep ="")})
 output$info.out <- renderPrint({
   info()
 })
-
+output$cite.out <- renderPrint({
+  cite()
+})
 output$data.out <- renderPrint({
   data()
 })
@@ -1138,3 +1445,6 @@ output$downloadFunRandPlot <- downloadHandler(
 #  |  |  |  |(_(  |  |  (( |  |  |  |  |  |  |
 #  |  |  |  |  |  |  |  |\)|  |  |  |  |  |  |
 #  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+# That's my Indy and my Ari, they're my cats
+# Whenever I'm trying to work on this at night
+# They fight for lap space and purrr -Kyle

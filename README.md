@@ -1,7 +1,14 @@
-MAVIS: Meta Analysis via Shiny
+MAVIS: Meta Analysis via Shiny v1.1.0 "Smiling Fox"
 =====
+[![DOI](https://zenodo.org/badge/9922/kylehamilton/MAVIS.svg)](http://dx.doi.org/10.5281/zenodo.14966)
 
-The goal of this project is to help students and researchers run a meta-analysis as easily as possible.
+![DOWLOADS](http://cranlogs.r-pkg.org/badges/MAVIS "Monthly Downloads")
+
+#### News about MAVIS
+
+* April 29, 2015
+* Version 1.1 has been sent to CRAN.
+
 
 List of Packages Used 
 ```
@@ -12,8 +19,20 @@ library(meta)
 library(MAd) 
 library(MAc) 
 library(quantreg) 
-library(ggplot2) 
+library(ggplot2)
+library(compute.es)
+library(SCMA)
 ```
+The first production release of MAVIS is now available on CRAN! v1.0 has been named "Gobbling Turkey"
+
+Live demo of v1.0 can be found here http://shiny.aaboyles.com/MAVIS/inst/shiny/
+
+![8505162700_11394c3f6a_z](https://cloud.githubusercontent.com/assets/2274317/7405977/b4a9163e-eeaf-11e4-9f74-1f42c7cbf4f4.jpg)
+
+Photo by https://www.flickr.com/photos/harlequeen/
+
+Image Licensed under https://creativecommons.org/licenses/by/2.0/
+
 ### Acknowledgments and Authors
 
 #### Acknowledgments
@@ -33,3 +52,12 @@ William Kyle Hamilton maintains this application and has authored new features.
 [Atsushi Mizumoto, PhD - Kansai University](http://mizumot.com)
 
 Atsushi Mizumoto wrote the first version of this application; this application is a fork of the original which can be found [here](https://github.com/mizumot/meta)
+
+#### Contributors and Translators
+![alt text](http://oi59.tinypic.com/2mnrcci.jpg "Logo Title Text 1") [Burak Aydin, PhD - Recep Tayyip Erdoğan University](http://akademisyen.erdogan.edu.tr/akademisyen.php?uyeid=827a0e170c32e5ce6e7b31ebda784148)
+
+Burak Aydin is working on a Turkish version of MAVIS and contributed the dichotomous data entry feature.
+
+![alt text](http://kylehamilton.com/wp-content/uploads/2015/04/katie80.png "Logo Title Text 1") [Kathleen Coburn - University of California, Merced](http://psychology.ucmerced.edu/content/kathleen-coburn)
+
+Kathleen Coburn contributed technical advice on how to run a meta-analysis as well as information on publication bias.
