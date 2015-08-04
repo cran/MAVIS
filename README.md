@@ -1,19 +1,24 @@
-MAVIS: Meta Analysis via Shiny v1.1.0 "Smiling Fox"
+MAVIS: Meta Analysis via Shiny v1.1.1 "Smiling Fox"
 =====
-[![DOI](https://zenodo.org/badge/9922/kylehamilton/MAVIS.svg)](http://dx.doi.org/10.5281/zenodo.14966)
+![DOWLOADS](http://cranlogs.r-pkg.org/badges/MAVIS "Monthly Downloads from CRAN")
 
-![DOWLOADS](http://cranlogs.r-pkg.org/badges/MAVIS "Monthly Downloads")
+### Live demo of MAVIS v1.1.1 can be found here http://kylehamilton.net/shiny/MAVIS/
 
 #### News about MAVIS
 
+August 4, 2015
+* Version 1.1.1 has been sent to CRAN
+* Added one new effect size calculator and included the Turkish version of MAVIS (aRma) to the package.
+
 * April 29, 2015
-* Version 1.1 has been sent to CRAN.
+* Version 1.1 has been sent to CRAN and can be found here http://cran.r-project.org/web/packages/MAVIS/index.html.
 
 
 List of Packages Used 
 ```
 library(shiny) 
 library(shinyAce) 
+library(shinyBS)
 library(metafor) 
 library(meta) 
 library(MAd) 
@@ -22,10 +27,9 @@ library(quantreg)
 library(ggplot2)
 library(compute.es)
 library(SCMA)
+library(SCRT)
 ```
-The first production release of MAVIS is now available on CRAN! v1.0 has been named "Gobbling Turkey"
-
-Live demo of v1.0 can be found here http://shiny.aaboyles.com/MAVIS/inst/shiny/
+The first production release of MAVIS is now available on CRAN! v1.1 has been named "Smiling Fox"
 
 ![8505162700_11394c3f6a_z](https://cloud.githubusercontent.com/assets/2274317/7405977/b4a9163e-eeaf-11e4-9f74-1f42c7cbf4f4.jpg)
 

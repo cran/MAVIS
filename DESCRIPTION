@@ -1,12 +1,11 @@
 Package: MAVIS
 Type: Package
 Title: Meta Analysis via Shiny
-Version: 1.1
-Date: 2015-04-29
-Author: Authors@R: c(person("William Kyle", "Hamilton", role = c("aut", "cre"),
-                    email = "kyle.hamilton@gmail.com"),
+Version: 1.1.1
+Date: 2015-08-04
+Authors@R: c(person("William Kyle", "Hamilton", role = c("aut", "cre"), email = "kyle.hamilton@gmail.com"),
              person("Atsushi", "Mizumoto", role = "aut"),
-             person("Burak", "Aydin", role = c("ctb", "trl"),
+             person("Burak", "Aydin", role = c("ctb", "trl")),
              person("Kathleen", "Coburn", role = "ctb"))
 Maintainer: William Kyle Hamilton <kyle.hamilton@gmail.com>
 Description: Interactive shiny application for running a meta-analysis,
@@ -18,7 +17,11 @@ Depends: R (>= 3.0.3)
 Imports: shiny, shinyAce, metafor, MAc, MAd, quantreg, ggplot2,
         compute.es, SCMA, SCRT, shinyBS
 LazyData: true
-Packaged: 2015-04-30 08:44:00 UTC; Kyle
+Packaged: 2015-08-05 02:31:14 UTC; Lab Coordinator
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2015-04-30 20:26:00
+Date/Publication: 2015-08-05 09:30:35
+Author: William Kyle Hamilton [aut, cre],
+  Atsushi Mizumoto [aut],
+  Burak Aydin [ctb, trl],
+  Kathleen Coburn [ctb]

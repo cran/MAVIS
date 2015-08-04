@@ -11,7 +11,7 @@ library(ggplot2)
 library(compute.es)
 library(SCMA)
 library(SCRT)
-shinyUI(navbarPage(title=div(img(src="http://kylehamilton.com/wp-content/uploads/2015/04/mavis1a-e1430059956805.png")), windowTitle="MAVIS v1.0.5",
+shinyUI(navbarPage(title=div(img(src="http://kylehamilton.com/wp-content/uploads/2015/04/mavis1a-e1430059956805.png")), windowTitle="MAVIS v1.1.1",
 #shinyUI(navbarPage("MAVIS: Meta Analysis Via Shiny v1.0.4", windowTitle="MAVIS v1.0.4",
 # If I want to add a theme here is how to do it
 # shinyUI(navbarPage(theme = shinytheme("flatly"),"MAVIS: Meta Analysis Via Shiny v1.0.3",
@@ -507,6 +507,45 @@ tabPanel("Chi-Squared Statistic to Effect Size", icon = icon("chevron-right", li
          )
          
 ),
+tabPanel("Outcome Measures for Individual Groups", icon = icon("chevron-right", lib = "font-awesome"),
+         
+         verticalLayout(
+           
+           wellPanel(
+             fluidRow(
+               column(3,
+                      p(strong("Dichotomous Variables")),
+                      
+                      numericInput("xi", "Frequencies of the event of interest", 6),
+                      
+                      numericInput("ni", "Sample size", 323),
+                      
+                      #numericInput("n1i", "Total", 121),
+                      
+                      p(br())
+               ),
+               column(4,
+                      radioButtons("divari1", strong("Measure Selection"),
+                                   c("raw proportion" = "PR",
+                                     "log transformed proportion" = "PLN",
+                                     "logit transformed proportion (i.e., log odds)" = "PLO",
+                                     "arcsine square-root transformed proportion (i.e., the angular transformation)" = "PAS",
+                                     "Freeman-Tukey double arcsine transformed proportion (Freeman & Tukey, 1950)." = "PFT"
+                                   ), selected = "PR"),
+                      submitButton("Update View")
+               )
+               
+             )),
+           
+           
+           h3("Effect Size Estimates and Corresponding Sampling Variances"),
+           verbatimTextOutput("divari1.out"),
+           
+           br()
+           
+         )
+         
+),
 tabPanel("Outcome Measures for Two-Group Comparisons", icon = icon("chevron-right", lib = "font-awesome"),
          
          verticalLayout(
@@ -657,7 +696,8 @@ navbarMenu("About MAVIS", icon = icon("dot-circle-o", lib = "font-awesome"),
                       MAVIS a positive user experience with an easy to use interface along with the power of R to provide 
                       the best possible user experience."),
                     br(),
-                    strong("MAVIS Version 1.1"),
+                    strong("MAVIS Version 1.1.1"),
+                    p("Last Updated July 20th 2015"),
                     p("Number of monthly downloads from CRAN"),
                     img(src = "http://cranlogs.r-pkg.org/badges/MAVIS", seamless=NA),
                     
